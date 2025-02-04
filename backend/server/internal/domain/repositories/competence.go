@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"net/http"
 	"server/internal/domain/types/models"
+	"server/internal/domain/types/response"
 )
 
 var (
@@ -14,8 +15,8 @@ var (
 )
 
 type CompetenceRepository interface {
-	//GetAllTypesCompetencies() (httpCode int, repErr error, types []string)
 	GetAllCompetencies() (httpCode int, repErr error, competencies []models.CompetenceModel)
+	GetAllBodyCompetencies() (httpCode int, repErr error, allBodyCompetencies []response.AllBodyCompetence)
 	//GetOneCompetenceByType(t enum.TypeCompetence) (httpCode int, repErr error, competence models.CompetenceModel)
 }
 
@@ -27,8 +28,15 @@ func NewCompetenceRepository(mongoDB *mongo.Database) *CompetenceRepositoryImpl 
 	return &CompetenceRepositoryImpl{mongoDB: mongoDB}
 }
 
+func (compR *CompetenceRepositoryImpl) GetAllBodyCompetencies(
+	httpCode int,
+	repErr error,
+	allBodyCompetencies []response.AllBodyCompetence) {
+	//cursor, mongoErr := compR.mongoDB.Collection("body_competencies").Find(ctx, bson.D{})
+}
+
 func (compR *CompetenceRepositoryImpl) GetAllCompetencies() (httpCode int, repErr error, competences []models.CompetenceModel) {
-	cursor, mongoErr := compR.mongoDB.Collection("competences").Find(ctx, bson.M{})
+	cursor, mongoErr := compR.mongoDB.Collection("competencies").Find(ctx, bson.M{})
 	if mongoErr != nil {
 		repErr = fmt.Errorf("Ошибка извлечения всех записей из коллекции competences: %v", mongoErr.Error())
 		return http.StatusInternalServerError, repErr, competences
@@ -46,10 +54,3 @@ func (compR *CompetenceRepositoryImpl) GetAllCompetencies() (httpCode int, repEr
 
 	return http.StatusOK, nil, competences
 }
-
-//func (compR *CompetenceRepositoryImpl) GetOneCompetenceByType(t enum.TypeCompetence) (httpCode int, repErr e, competence models.CompetenceModel) {
-//	compR.mongoDB.Collection("competences").
-//		FindOne(ctx,bson.M{
-//
-//	})
-//}

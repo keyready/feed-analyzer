@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"net/http"
 	"server/internal/domain/repositories"
 	"server/internal/domain/types/enum"
 	"server/internal/domain/types/models"
@@ -8,7 +9,7 @@ import (
 
 type CompetenceUsecase interface {
 	GetAllCompetencies() (httpCode int, usecaseErr error, competencies []models.CompetenceModel)
-	GetAllTypesCompetencies() (httpCode int, usecaseErr error, types []string)
+	GetAllTypesCompetencies() (httpCode int, usecaseErr error, types []enum.TypeCompetence)
 }
 
 type CompetenceUsecaseImpl struct {
@@ -25,7 +26,9 @@ func (compUsecase *CompetenceUsecaseImpl) GetAllTypesCompetencies() (httpCode in
 		enum.TeamMethodicalSkills,
 		enum.TechnicalSkills,
 		enum.AcademicAchievements,
+		enum.DomainKnowledge,
 	}
+	return http.StatusOK, nil, types
 }
 
 func (compUsecase *CompetenceUsecaseImpl) GetAllCompetencies() (httpCode int, usecaseErr error, competencies []models.CompetenceModel) {

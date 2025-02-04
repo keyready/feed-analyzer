@@ -9,4 +9,5 @@ func NewCompetenceRouters(compControllers *controllers.CompetenceController, rou
 	competenceRouters := router.Group("/api/v1/competence")
 
 	competenceRouters.GET("/get-all", compControllers.GetAllCompetencies)
+	competenceRouters.GET("/types/get-all", compControllers.GetAllTypesCompetencies)
 }

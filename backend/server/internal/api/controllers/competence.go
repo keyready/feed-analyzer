@@ -13,6 +13,11 @@ func NewCompetenceControllers(compUsecase usecases.CompetenceUsecase) *Competenc
 	return &CompetenceController{compUsecase: compUsecase}
 }
 
+func (compContr *CompetenceController) GetAllTypesCompetencies(ctx *gin.Context) {
+	httpCode, _, types := compContr.compUsecase.GetAllTypesCompetencies()
+	ctx.JSON(httpCode, types)
+}
+
 func (compContr *CompetenceController) GetAllCompetencies(ctx *gin.Context) {
 	httpCode, usecaseErr, competencies := compContr.compUsecase.GetAllCompetencies()
 	if usecaseErr != nil {
