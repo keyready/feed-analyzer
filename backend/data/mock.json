@@ -1,0 +1,10 @@
+{
+  "firstname": "Валентин",
+  "middlename": "Сергеевич",
+  "lastname": "Кофанов",
+  "age": 21,
+  "rank": "рядовой",
+  "avatar": "avatar.img",
+  "documents": ["doc1","doc2","doc3"],
+
+}
