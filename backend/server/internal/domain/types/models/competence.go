@@ -9,6 +9,6 @@ type CompetenceModel struct {
 
 	Body primitive.ObjectID `bson:"body" json:"body"`
 
-	Value float64 `bson:"value" json:"value"`
-	Score float64 `bson:"score" json:"score"`
+	Value float64 `bson:"value" json:"value"` //есть среднее арифметическое всех body-компетишинов
+	Score float64 `bson:"score" json:"score"` //есть произведение value на
 }
