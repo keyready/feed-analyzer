@@ -10,4 +10,5 @@ func NewCompetenceRouters(compControllers *controllers.CompetenceController, rou
 
 	competenceRouters.GET("/get-all", compControllers.GetAllCompetencies)
 	competenceRouters.GET("/types/get-all", compControllers.GetAllTypesCompetencies)
+	competenceRouters.GET("/body-competence/get-all", compControllers.GetAllBodyCompetencies)
 }

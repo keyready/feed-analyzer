@@ -12,10 +12,10 @@ import (
 func AppRouters(mongoDB *mongo.Database) *gin.Engine {
 	r := gin.New()
 
-	//cr := repositories.NewCandidateRepository(mongoDB)
-	//cu := usecases.NewCandidateUsecase(cr)
-	//cc := controllers.NewCandidateControllers(cu)
-	//v1.NewCandidateRouters(cc, r)
+	candRepo := repositories.NewCandidateRepository(mongoDB)
+	candUsecase := usecases.NewCandidateUsecase(candRepo)
+	candContr := controllers.NewCandidateController(candUsecase)
+	v1.NewCandidateRouters(candContr, r)
 
 	compRepo := repositories.NewCompetenceRepository(mongoDB)
 	compUsecase := usecases.NewCompetenciesUsecase(compRepo)

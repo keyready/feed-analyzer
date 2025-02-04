@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"server/internal/domain/types/request"
 	"server/internal/domain/usecases"
 )
 
@@ -11,6 +13,21 @@ type CompetenceController struct {
 
 func NewCompetenceControllers(compUsecase usecases.CompetenceUsecase) *CompetenceController {
 	return &CompetenceController{compUsecase: compUsecase}
+}
+
+func (compContr *CompetenceController) GetAllBodyCompetencies(ctx *gin.Context) {
+	allBodyCompetencies := request.AllBodyCompetenceRequest{
+		Type: ctx.Query("type"),
+		Name: ctx.Query("name"),
+	}
+
+	httpCode, usecaseErr, allBodyCompetenciesResponse := compContr.compUsecase.GetAllBodyCompetencies(allBodyCompetencies)
+	if usecaseErr != nil {
+		ctx.AbortWithStatusJSON(httpCode, usecaseErr)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, allBodyCompetenciesResponse)
 }
 
 func (compContr *CompetenceController) GetAllTypesCompetencies(ctx *gin.Context) {
