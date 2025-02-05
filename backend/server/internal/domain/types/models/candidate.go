@@ -17,4 +17,7 @@ type CandidateModel struct {
 
 	Competencies  []primitive.ObjectID `bson:"competencies" json:"competencies"`
 	Qualification primitive.ObjectID   `bson:"qualification" json:"qualification"`
+	//Points        []primitive.ObjectID `bson:"points" json:"points"`
+
+	Notes string `bson:"notes" json:"notes"` //генерит deepSeek
 }
