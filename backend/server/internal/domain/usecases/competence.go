@@ -3,16 +3,12 @@ package usecases
 import (
 	"net/http"
 	"server/internal/domain/repositories"
-	"server/internal/domain/types/enum"
-	"server/internal/domain/types/models"
-	"server/internal/domain/types/request"
 	"server/internal/domain/types/response"
 )
 
 type CompetenceUsecase interface {
-	GetAllCompetencies() (httpCode int, usecaseErr error, competencies []models.CompetenceModel)
-	GetAllTypesCompetencies() (httpCode int, usecaseErr error, types []enum.TypeCompetence)
-	GetAllBodyCompetencies(allBodyCompetenciesRequest request.AllBodyCompetenceRequest) (httpCode int, usecaseErr error, allBodyCompetenciesResponse []response.AllBodyCompetenceResponse)
+	GetAllTypeOfNames() (httpCode int, usecaseErr error, types response.TypeOfNames)
+	GetAllSkillsCompetencies() (httpCode int, usecaseErr error, allBodyCompetenciesResponse []response.AllSkills)
 }
 
 type CompetenceUsecaseImpl struct {
@@ -23,30 +19,15 @@ func NewCompetenciesUsecase(compRepo repositories.CompetenceRepository) *Compete
 	return &CompetenceUsecaseImpl{compRepo: compRepo}
 }
 
-func (compUsecase *CompetenceUsecaseImpl) GetAllBodyCompetencies(allBodyCompetenciesRequest request.AllBodyCompetenceRequest) (
-	httpCode int, usecaseErr error, allBodyCompetenciesResponse []response.AllBodyCompetenceResponse) {
-	httpCode, usecaseErr, allBodyCompetenciesResponse = compUsecase.compRepo.GetAllBodyCompetencies(allBodyCompetenciesRequest)
+func (compUsecase *CompetenceUsecaseImpl) GetAllSkillsCompetencies() (httpCode int, usecaseErr error, allBodyCompetencies []response.AllSkills) {
+	httpCode, usecaseErr, allBodyCompetencies = compUsecase.compRepo.GetAllSkillsCompetencies()
 	if usecaseErr != nil {
-		return httpCode, usecaseErr, allBodyCompetenciesResponse
+		return httpCode, usecaseErr, nil
 	}
-	return httpCode, nil, allBodyCompetenciesResponse
+	return httpCode, nil, allBodyCompetencies
 }
 
-func (compUsecase *CompetenceUsecaseImpl) GetAllTypesCompetencies() (httpCode int, usecaseErr error, types []enum.TypeCompetence) {
-	types = []enum.TypeCompetence{
-		enum.SoftSkills,
-		enum.TeamMethodicalSkills,
-		enum.TechnicalSkills,
-		enum.AcademicAchievements,
-		enum.DomainKnowledge,
-	}
+func (compUsecase *CompetenceUsecaseImpl) GetAllTypeOfNames() (httpCode int, usecaseErr error, types response.TypeOfNames) {
+	httpCode, usecaseErr, types = compUsecase.compRepo.GetAllTypeOfNames()
 	return http.StatusOK, nil, types
-}
-
-func (compUsecase *CompetenceUsecaseImpl) GetAllCompetencies() (httpCode int, usecaseErr error, competencies []models.CompetenceModel) {
-	httpCode, usecaseErr, competencies = compUsecase.compRepo.GetAllCompetencies()
-	if usecaseErr != nil {
-		return httpCode, usecaseErr, competencies
-	}
-	return httpCode, nil, competencies
 }

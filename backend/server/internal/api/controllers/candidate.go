@@ -21,7 +21,7 @@ func (candCont *CandidateController) AssessmentCandidate(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, bindErr.Error())
 		return
 	}
-
+	ctx.JSON(http.StatusOK, gin.H{})
 }
 
 func (candCont *CandidateController) GetOneCandidate(ctx *gin.Context) {

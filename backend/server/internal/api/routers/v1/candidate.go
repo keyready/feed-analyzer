@@ -8,7 +8,7 @@ import (
 func NewCandidateRouters(candContr *controllers.CandidateController, router *gin.Engine) {
 	candidatesRouters := router.Group("/api/v1/candidates")
 
-	candidatesRouters.GET("/get-all", candContr.GetAllCandidates)
-	candidatesRouters.GET("/get-one/:id", candContr.GetOneCandidate)
-	candidatesRouters.POST("/assessment", candContr.AssessmentCandidate)
+	candidatesRouters.GET("", candContr.GetAllCandidates)
+	candidatesRouters.GET("/:id", candContr.GetOneCandidate)
+	candidatesRouters.POST("/:id/assessment", candContr.AssessmentCandidate)
 }

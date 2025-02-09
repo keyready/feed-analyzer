@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"net/http"
 	"server/internal/domain/repositories"
 	"server/internal/domain/types/models"
 	"server/internal/domain/types/request"
@@ -22,19 +23,7 @@ func NewCandidateUsecase(candidateRepo repositories.CandidateRepository) *Candid
 
 func (candUsecase *CandidateUsecaseImpl) AssessmentCandidate(candidateData request.CandidateData) (
 	httpCode int, usecaseErr error, candidate models.CandidateModel) {
-
-	var weightedAssessment float64
-
-	for _, competence := range candidateData.Competences {
-		bodyCompetence := candUsecase.candidateRepo.GetOneBodyCompetence(
-			competence.Type,
-			competence.Name,
-		)
-		oneCompetenceScore := bodyCompetence.Weight * competence.Value
-		//Запись скора по одному из типов компетенций
-		weightedAssessment += oneCompetenceScore
-	}
-
+	return http.StatusOK, nil, candidate
 }
 
 func (candUsecase *CandidateUsecaseImpl) GetAllCandidates() (httpCode int, usecaseErr error, candidates []models.CandidateModel) {

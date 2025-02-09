@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"net/http"
-	"server/internal/domain/types/models"
-	"server/internal/domain/types/request"
+	"server/internal/domain/types/enum/competence"
 	"server/internal/domain/types/response"
 )
 
 type CompetenceRepository interface {
-	GetAllCompetencies() (httpCode int, repErr error, competencies []models.CompetenceModel)
-	GetAllBodyCompetencies(allBodyCompetenceRequest request.AllBodyCompetenceRequest) (httpCode int, repErr error, allBodyCompetencies []response.AllBodyCompetenceResponse)
+	GetAllSkillsCompetencies() (httpCode int, repErr error, allSkills []response.AllSkills)
+	GetAllTypeOfNames() (httpCode int, repErr error, typesOfNames response.TypeOfNames)
 }
 
 type CompetenceRepositoryImpl struct {
@@ -23,67 +23,79 @@ func NewCompetenceRepository(mongoDB *mongo.Database) *CompetenceRepositoryImpl 
 	return &CompetenceRepositoryImpl{mongoDB: mongoDB}
 }
 
-func (compR *CompetenceRepositoryImpl) GetAllBodyCompetencies(allBodyCompetenceRequest request.AllBodyCompetenceRequest) (
-	httpCode int, repErr error, allBodyCompetencies []response.AllBodyCompetenceResponse) {
-	if allBodyCompetenceRequest.Type == "" && allBodyCompetenceRequest.Name == "" {
-		cursor, mongoErr := compR.mongoDB.Collection("body_competencies").
-			Find(ctx, bson.M{})
+func (compR *CompetenceRepositoryImpl) GetAllTypeOfNames() (httpCode int, repErr error, typesOfNames response.TypeOfNames) {
+	typesOfNames.Types = []string{
+		competence.AcademicAchievements,
+		competence.SoftSkills,
+		competence.DomainKnowledge,
+		competence.TechnicalSkills,
+		competence.MilitaryTraining,
+	}
+
+	for _, t := range typesOfNames.Types {
+		project := bson.D{{"name", 1}}
+
+		cur, mongoErr := compR.mongoDB.Collection("skills").
+			Find(ctx, bson.D{{"type", t}}, options.Find().SetProjection(project))
+		defer cur.Close(ctx)
+
 		if mongoErr != nil {
-			repErr = fmt.Errorf("Ошибка извлечения из коллекции body_competencies: %w", mongoErr.Error())
-			return http.StatusInternalServerError, repErr, allBodyCompetencies
+			repErr = fmt.Errorf("Ошибка извлечения названия скиллов одного типа компетенции: %s", mongoErr.Error())
+			return http.StatusInternalServerError, repErr, typesOfNames
 		}
-		defer cursor.Close(ctx)
 
-		for cursor.Next(ctx) {
-			var bodyCompetence response.AllBodyCompetenceResponse
-			if decodeErr := cursor.Decode(&bodyCompetence); decodeErr != nil {
-				repErr = fmt.Errorf("Ошибка анмаршлинга одной записи body_competencies: %w", decodeErr)
-				return http.StatusInternalServerError, repErr, allBodyCompetencies
+		var names []string
+		for cur.Next(ctx) {
+			var name string
+			if err := cur.Decode(&name); err != nil {
+				repErr = fmt.Errorf("Ошибка анмаршалинга одного имени: %s", mongoErr.Error())
+				return http.StatusInternalServerError, repErr, typesOfNames
 			}
-			allBodyCompetencies = append(allBodyCompetencies, bodyCompetence)
+			names = append(names, name)
 		}
-		return http.StatusOK, nil, allBodyCompetencies
+		typesOfNames.Names = append(typesOfNames.Names, names)
 	}
 
-	filterOr := bson.M{"$or": []bson.M{{"type": allBodyCompetenceRequest.Type}, {"name": allBodyCompetenceRequest.Name}}}
-
-	cursor, mongoErr := compR.mongoDB.Collection("body_competencies").
-		Find(ctx, filterOr)
-	if mongoErr != nil {
-		repErr = fmt.Errorf("Ошибка извлечения из коллекции с body_competencies по type %w или name %w : %w",
-			allBodyCompetenceRequest.Type, allBodyCompetenceRequest.Name, mongoErr.Error())
-		return http.StatusInternalServerError, repErr, allBodyCompetencies
-	}
-	defer cursor.Close(ctx)
-
-	for cursor.Next(ctx) {
-		var bodyCompetence response.AllBodyCompetenceResponse
-		if decodeErr := cursor.Decode(&bodyCompetence); decodeErr != nil {
-			repErr = fmt.Errorf("Ошибка анмаршалинга записи из body_competencies: %w", decodeErr.Error())
-			return http.StatusInternalServerError, repErr, allBodyCompetencies
-		}
-		allBodyCompetencies = append(allBodyCompetencies, bodyCompetence)
-	}
-
-	return http.StatusOK, nil, allBodyCompetencies
+	return http.StatusOK, repErr, typesOfNames
 }
 
-func (compR *CompetenceRepositoryImpl) GetAllCompetencies() (httpCode int, repErr error, competences []models.CompetenceModel) {
-	cursor, mongoErr := compR.mongoDB.Collection("competencies").Find(ctx, bson.M{})
-	if mongoErr != nil {
-		repErr = fmt.Errorf("Ошибка извлечения всех записей из коллекции competences: %v", mongoErr.Error())
-		return http.StatusInternalServerError, repErr, competences
+func (compR *CompetenceRepositoryImpl) GetAllSkillsCompetencies() (httpCode int, repErr error, allSkills []response.AllSkills) {
+	types := []string{
+		competence.AcademicAchievements,
+		competence.SoftSkills,
+		competence.DomainKnowledge,
+		competence.TechnicalSkills,
+		competence.MilitaryTraining,
 	}
-	defer cursor.Close(ctx)
 
-	for cursor.Next(ctx) {
-		var competence models.CompetenceModel
-		if decodeErr := cursor.Decode(&competence); decodeErr != nil {
-			repErr = fmt.Errorf("Ошибка анмаршалинга одной записи компетенции: %v", decodeErr.Error())
-			return http.StatusInternalServerError, repErr, competences
+	var oneTypeSkills response.AllSkills
+	for _, t := range types {
+		oneTypeSkills.Type = t
+
+		project := bson.D{{"name", 1}, {"description", 1}}
+
+		cur, mongoErr := compR.mongoDB.Collection("skills").
+			Find(ctx, bson.D{{"type", t}}, options.Find().SetProjection(project))
+		defer cur.Close(ctx)
+
+		if mongoErr != nil {
+			repErr = fmt.Errorf("Ошибка извлечения одного скилла: %s", mongoErr.Error())
+			return http.StatusInternalServerError, repErr, nil
 		}
-		competences = append(competences, competence)
+
+		var skills []response.Skill
+		for cur.Next(ctx) {
+			var skill response.Skill
+			if err := cur.Decode(&skill); err != nil {
+				repErr = fmt.Errorf("Ошибка анмаршалинга одного скилла: %s", mongoErr.Error())
+				return http.StatusInternalServerError, repErr, nil
+			}
+			skills = append(skills, skill)
+		}
+		oneTypeSkills.Skills = skills
+
+		allSkills = append(allSkills, oneTypeSkills)
 	}
 
-	return http.StatusOK, nil, competences
+	return http.StatusOK, nil, allSkills
 }

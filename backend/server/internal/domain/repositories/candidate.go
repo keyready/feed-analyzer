@@ -19,7 +19,6 @@ type CandidateRepository interface {
 	GetAllCandidates() (httpCode int, repoErr error, candidates []models.CandidateModel)
 	GetOneCandidate(getOneCandidateRequest request.GetOneCandidateRequest) (httpCode int, repoErr error, candidate models.CandidateModel)
 	AssessmentCandidate(candidateData request.CandidateData) (httpCode int, repoErr error, candidate models.CandidateModel)
-	GetOneBodyCompetence(t, name string) (bodyCompetence models.BodyCompetenceModel)
 }
 
 type CandidateRepositoryImpl struct {
@@ -30,18 +29,24 @@ func NewCandidateRepository(mongoDB *mongo.Database) *CandidateRepositoryImpl {
 	return &CandidateRepositoryImpl{mongoDB: mongoDB}
 }
 
-func (candRepo *CandidateRepositoryImpl) GetOneBodyCompetence(t, name string) (bodyCompetence models.BodyCompetenceModel) {
-	candRepo.mongoDB.Collection("body_competencies").
-		FindOne(ctx, bson.M{"name": name, "type": t}).
-		Decode(&bodyCompetence)
-	return bodyCompetence
-}
-
 func (candRepo *CandidateRepositoryImpl) AssessmentCandidate(candidateData request.CandidateData) (
 	httpCode int, repoErr error, candidate models.CandidateModel) {
 
 	return http.StatusOK, nil, candidate
 
+}
+
+func (candRepo *CandidateRepositoryImpl) GetAllCandidates() (httpCode int, repoErr error, candidates []models.CandidateModel) {
+	cursor, _ := candRepo.mongoDB.Collection("candidates").Find(ctx, bson.M{})
+	defer cursor.Close(ctx)
+
+	for cursor.Next(ctx) {
+		candidate := models.CandidateModel{}
+		cursor.Decode(&candidate)
+		candidates = append(candidates, candidate)
+	}
+
+	return http.StatusOK, nil, candidates
 }
 
 func (candRepo *CandidateRepositoryImpl) GetOneCandidate(getOneCandidateRequest request.GetOneCandidateRequest) (
@@ -60,27 +65,11 @@ func (candRepo *CandidateRepositoryImpl) GetOneCandidate(getOneCandidateRequest 
 		return http.StatusInternalServerError, repoErr, candidate
 	}
 
+	var qual models.QualificationModel
+	candRepo.mongoDB.Collection("qualifications").FindOne(ctx, bson.M{"_id": candidate.Qualification}).Decode(&qual)
+
+	var comp models.CandidateModel
+	candRepo.mongoDB.Collection("competencies").FindOne(ctx, bson.M{"_id": candidate.Competencies[0]}).Decode(&comp)
+
 	return http.StatusOK, nil, candidate
-}
-
-func (candRepo *CandidateRepositoryImpl) GetAllCandidates() (httpCode int, repoErr error, candidates []models.CandidateModel) {
-	cursor, mongoErr := candRepo.mongoDB.Collection("candidates").
-		Find(ctx, bson.M{})
-	defer cursor.Close(ctx)
-
-	if mongoErr != nil {
-		repoErr = fmt.Errorf("Ошибка извлечения записей из коллекции candidates: %w", mongoErr.Error())
-		return http.StatusInternalServerError, repoErr, candidates
-	}
-
-	for cursor.Next(ctx) {
-		var candidate models.CandidateModel
-		if decodeErr := cursor.Decode(&candidate); decodeErr != nil {
-			repoErr = fmt.Errorf("Ошибка анмаршалинга записи из коллекции candidates: %w", decodeErr.Error())
-			return http.StatusInternalServerError, repoErr, candidates
-		}
-		candidates = append(candidates, candidate)
-	}
-
-	return http.StatusOK, nil, candidates
 }

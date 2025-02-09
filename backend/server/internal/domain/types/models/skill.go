@@ -2,8 +2,10 @@ package models
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
-type BodyCompetenceModel struct {
+type SkillModel struct {
 	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+
+	Type string `bson:"type" json:"type"`
 
 	Name        string `bson:"name" json:"name"`
 	Description string `bson:"description" json:"description"`

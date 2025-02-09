@@ -8,7 +8,6 @@ import (
 func NewCompetenceRouters(compControllers *controllers.CompetenceController, router *gin.Engine) {
 	competenceRouters := router.Group("/api/v1/competence")
 
-	competenceRouters.GET("/get-all", compControllers.GetAllCompetencies)
-	competenceRouters.GET("/types/get-all", compControllers.GetAllTypesCompetencies)
-	competenceRouters.GET("/body-competence/get-all", compControllers.GetAllBodyCompetencies)
+	competenceRouters.GET("/type-of-names", compControllers.GetAllTypeOfNames)
+	competenceRouters.GET("/skills", compControllers.GetAllSkillsCompetencies)
 }

@@ -1,0 +1,49 @@
+services:
+  client:
+    container_name: vkalance_client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    volume:
+      - /path_to_client_source:./dist
+
+  server:
+    container_name: vkalance_server
+    build:
+      context: ./backend/server
+      dockerfile: Dockerfile.prod
+    ports:
+      - 5000:5000
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo
+    container_name: vkalance_mongo
+    restart: always
+    ports:
+      - 27017:27017
+    args:
+      MONGO_INITDB_ROOT_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+
+  mongo-express:
+    image: mongo-express
+    container_name: vkalance_mongoExpress
+    restart: always
+    ports:
+      - 8081:8081
+    args:
+      ME_CONFIG_MONGODB_ADMINUSERNAME
+      ME_CONFIG_MONGODB_ADMINPASSWORD
+      ME_CONFIG_MONGODB_URL
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${ME_CONFIG_MONGODB_ADMINUSERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${ME_CONFIG_MONGODB_ADMINPASSWORD}
+      ME_CONFIG_BASICAUTH: ${ME_CONFIG_BASICAUTH}
+      ME_CONFIG_MONGODB_URL: ${ME_CONFIG_MONGODB_URL}
+    depends_on:
+      - mongodb

@@ -1,10 +1,12 @@
-package database
+package db
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -21,7 +23,7 @@ func GetMongoClient() (*mongo.Client, error) {
 		defer cancel()
 
 		clientOptions := options.Client().
-			ApplyURI("mongodb://localhost:27017").
+			ApplyURI(os.Getenv("MONGO_URI")).
 			SetAppName("dashboard")
 
 		clientInstance, clientError = mongo.Connect(clientOptions)
@@ -32,6 +34,16 @@ func GetMongoClient() (*mongo.Client, error) {
 		if err := clientInstance.Ping(ctx, nil); err != nil {
 			log.Fatalf("Ошибка пингования MongoDB: %s", err)
 		}
+
+		candidatesWithQualification := []mongo.IndexModel{
+			{
+				Keys:    bson.D{{Key: "qualification_ref", Value: 1}},
+				Options: options.Index().SetName("idx_qualification_ref"),
+			},
+		}
+
+		clientInstance.Database("dashboard").Collection("candidates").
+			Indexes().CreateMany(ctx, candidatesWithQualification)
 
 		log.Println("Успешное подключение к MongoDB")
 	})
