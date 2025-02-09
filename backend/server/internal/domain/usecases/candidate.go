@@ -1,16 +1,18 @@
 package usecases
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"server/internal/domain/repositories"
 	"server/internal/domain/types/models"
 	"server/internal/domain/types/request"
+	"server/internal/domain/types/response"
 )
 
 type CandidateUsecase interface {
 	GetAllCandidates() (httpCode int, usecaseErr error, candidates []models.CandidateModel)
-	GetOneCandidate(getOneCandidate request.GetOneCandidateRequest) (httpCode int, usecaseErr error, candidate models.CandidateModel)
-	AssessmentCandidate(candidateData request.CandidateData) (httpCode int, usecaseErr error, candidate models.CandidateModel)
+	GetOneCandidate(candidateId string) (httpCode int, usecaseErr error, candidate response.CandidateResponse)
+	AssessmentCandidate(candidateData request.CandidateData) (httpCode int, usecaseErr error, qualification models.QualificationModel)
 }
 
 type CandidateUsecaseImpl struct {
@@ -22,8 +24,14 @@ func NewCandidateUsecase(candidateRepo repositories.CandidateRepository) *Candid
 }
 
 func (candUsecase *CandidateUsecaseImpl) AssessmentCandidate(candidateData request.CandidateData) (
-	httpCode int, usecaseErr error, candidate models.CandidateModel) {
-	return http.StatusOK, nil, candidate
+	httpCode int, usecaseErr error, qualification models.QualificationModel) {
+
+	httpCode, usecaseErr, qualification = candUsecase.candidateRepo.AssessmentCandidate(candidateData)
+	if usecaseErr != nil {
+		return httpCode, usecaseErr, qualification
+	}
+
+	return http.StatusOK, nil, qualification
 }
 
 func (candUsecase *CandidateUsecaseImpl) GetAllCandidates() (httpCode int, usecaseErr error, candidates []models.CandidateModel) {
@@ -34,10 +42,15 @@ func (candUsecase *CandidateUsecaseImpl) GetAllCandidates() (httpCode int, useca
 	return httpCode, nil, candidates
 }
 
-func (candUsecase *CandidateUsecaseImpl) GetOneCandidate(getOneCandidate request.GetOneCandidateRequest) (httpCode int, usecaseErr error, candidate models.CandidateModel) {
-	httpCode, usecaseErr, candidate = candUsecase.candidateRepo.GetOneCandidate(getOneCandidate)
+func (candUsecase *CandidateUsecaseImpl) GetOneCandidate(candidateId string) (
+	httpCode int, usecaseErr error, candidate response.CandidateResponse) {
+
+	candidateIdPrimitive, _ := primitive.ObjectIDFromHex(candidateId)
+
+	httpCode, usecaseErr, candidate = candUsecase.candidateRepo.GetOneCandidate(candidateIdPrimitive)
 	if usecaseErr != nil {
 		return httpCode, usecaseErr, candidate
 	}
+
 	return httpCode, nil, candidate
 }

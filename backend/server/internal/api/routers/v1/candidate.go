@@ -9,6 +9,6 @@ func NewCandidateRouters(candContr *controllers.CandidateController, router *gin
 	candidatesRouters := router.Group("/api/v1/candidates")
 
 	candidatesRouters.GET("", candContr.GetAllCandidates)
-	candidatesRouters.GET("/:id", candContr.GetOneCandidate)
-	candidatesRouters.POST("/:id/assessment", candContr.AssessmentCandidate)
+	candidatesRouters.GET("/:candidateId", candContr.GetOneCandidate)
+	candidatesRouters.POST("/assessment", candContr.AssessmentCandidate)
 }

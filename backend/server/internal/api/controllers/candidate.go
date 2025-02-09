@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"server/internal/domain/types/request"
@@ -18,17 +19,24 @@ func NewCandidateController(candUsecase usecases.CandidateUsecase) *CandidateCon
 func (candCont *CandidateController) AssessmentCandidate(ctx *gin.Context) {
 	var candidateData request.CandidateData
 	if bindErr := ctx.ShouldBindJSON(&candidateData); bindErr != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, bindErr.Error())
+		ctx.AbortWithStatusJSON(http.StatusBadRequest,
+			gin.H{"error": fmt.Sprintf("Ошибка получения данных с клиента: %s", bindErr.Error())})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{})
+
+	httpCode, contrErr, qualification := candCont.candidateUsecase.AssessmentCandidate(candidateData)
+	if contrErr != nil {
+		ctx.AbortWithStatusJSON(httpCode, gin.H{"error": contrErr.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, qualification)
 }
 
 func (candCont *CandidateController) GetOneCandidate(ctx *gin.Context) {
-	getOneCandidate := request.GetOneCandidateRequest{
-		ID: ctx.Param("id"),
-	}
-	httpCode, usecaseErr, candidate := candCont.candidateUsecase.GetOneCandidate(getOneCandidate)
+	candidateId := ctx.Param("candidateId")
+
+	httpCode, usecaseErr, candidate := candCont.candidateUsecase.GetOneCandidate(candidateId)
 	if usecaseErr != nil {
 		ctx.AbortWithStatusJSON(httpCode, usecaseErr)
 		return

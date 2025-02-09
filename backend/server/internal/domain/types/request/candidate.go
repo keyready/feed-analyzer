@@ -10,7 +10,7 @@ type CandidateData struct {
 	Middlename string `bson:"middlename" json:"middlename"`
 	Lastname   string `bson:"lastname" json:"lastname"`
 
-	Age        int             `bson:"age" json:"age"`
+	Age        int64           `bson:"age" json:"age"`
 	Rank       string          `bson:"rank" json:"rank"`
 	Avatar     string          `bson:"avatar"`
 	AvatarFile *multipart.File `json:"avatar"`
