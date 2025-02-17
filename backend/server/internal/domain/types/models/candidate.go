@@ -1,9 +1,11 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"go.mongodb.org/mongo-driver/v2/bson"
+)
 
 type CandidateModel struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ID bson.ObjectID `bson:"_id,omitempty" json:"id"`
 
 	Firstname  string `bson:"firstname" json:"firstname"`
 	Lastname   string `bson:"lastname" json:"lastname"`
@@ -15,6 +17,6 @@ type CandidateModel struct {
 
 	Documents []string `bson:"documents" json:"documents"`
 
-	Competencies  []primitive.ObjectID `bson:"competencies" json:"competencies"`
-	Qualification primitive.ObjectID   `bson:"qualification"`
+	Competencies  []bson.ObjectID `bson:"competencies" json:"competencies"`
+	Qualification bson.ObjectID   `bson:"qualification"`
 }

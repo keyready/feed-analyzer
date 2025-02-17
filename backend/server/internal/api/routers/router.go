@@ -7,12 +7,13 @@ import (
 	v1 "server/internal/api/routers/v1"
 	"server/internal/domain/repositories"
 	"server/internal/domain/usecases"
+	"server/pkg/ds"
 )
 
-func AppRouters(mongoDB *mongo.Database) *gin.Engine {
+func AppRouters(mongoDB *mongo.Database, ds *ds.DeepSeek) *gin.Engine {
 	r := gin.New()
 
-	candRepo := repositories.NewCandidateRepository(mongoDB)
+	candRepo := repositories.NewCandidateRepository(mongoDB, ds)
 	candUsecase := usecases.NewCandidateUsecase(candRepo)
 	candContr := controllers.NewCandidateController(candUsecase)
 	v1.NewCandidateRouters(candContr, r)

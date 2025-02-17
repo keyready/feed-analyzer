@@ -11,6 +11,7 @@ import (
 	"server/internal/domain/types/models"
 	"server/internal/domain/types/request"
 	"server/internal/domain/types/response"
+	"server/pkg/ds"
 )
 
 var (
@@ -24,15 +25,18 @@ type CandidateRepository interface {
 }
 
 type CandidateRepositoryImpl struct {
-	mongoDB *mongo.Database
+	mongoDB        *mongo.Database
+	deepSeekClient *ds.DeepSeek
 }
 
-func NewCandidateRepository(mongoDB *mongo.Database) *CandidateRepositoryImpl {
-	return &CandidateRepositoryImpl{mongoDB: mongoDB}
+func NewCandidateRepository(mongoDB *mongo.Database, ds *ds.DeepSeek) *CandidateRepositoryImpl {
+	return &CandidateRepositoryImpl{mongoDB: mongoDB, deepSeekClient: ds}
 }
 
 func (candRepo *CandidateRepositoryImpl) AssessmentCandidate(candidateData request.CandidateData) (
 	httpCode int, repoErr error, qualification models.QualificationModel) {
+
+	deepSeekRequest := make(map[string]float64)
 
 	types := []string{
 		competence.AcademicAchievements,
@@ -42,43 +46,71 @@ func (candRepo *CandidateRepositoryImpl) AssessmentCandidate(candidateData reque
 		competence.DomainKnowledge,
 	}
 
+	var competencies []bson.ObjectID
+
 	for _, t := range types {
-		skillsLen, _ := candRepo.mongoDB.Collection("skills").CountDocuments(ctx, bson.D{{"type", t}})
-		var pointIds []primitive.ObjectID
-		var totalValue float64
+		var totalScore float64
+		var totalPoints float64
+		var points []bson.ObjectID
+
+		lenSkills, _ := candRepo.mongoDB.Collection("skills").CountDocuments(ctx, bson.D{{"type", t}})
+
 		for _, c := range candidateData.Competences {
 			if c.Type == t {
 				var skill models.SkillModel
-
-				candRepo.mongoDB.Collection("skills").
-					FindOne(ctx, bson.D{{"name", c.Name}, {"type", c.Type}}).Decode(&skill)
+				_ = candRepo.mongoDB.Collection("skills").
+					FindOne(ctx, bson.D{
+						{"type", t},
+						{"name", c.Name}},
+					).
+					Decode(&skill)
 
 				score := skill.Weight * c.Value
-				totalValue += c.Value
+				totalScore += score
 
+				pointId := bson.NewObjectID()
 				point := models.PointModel{
-					Score: score,
+					ID:    pointId,
 					Value: c.Value,
+					Score: score,
 				}
+				_, _ = candRepo.mongoDB.Collection("points").
+					InsertOne(ctx, point)
 
-				resInsert, _ := candRepo.mongoDB.Collection("points").InsertOne(ctx, &point)
-				id := resInsert.InsertedID.(primitive.ObjectID)
-
-				pointIds = append(pointIds, id)
+				points = append(points, pointId)
 			}
 		}
-		totalPoints := totalValue / float64(skillsLen)
+
+		compId := bson.NewObjectID()
+		totalPoints = totalScore / float64(lenSkills)
+
+		deepSeekRequest[t] = totalScore
+
+		_, _ = candRepo.mongoDB.Collection("competences").
+			InsertOne(ctx, models.CompetenceModel{
+				ID:          compId,
+				Type:        t,
+				Points:      points,
+				TotalPoints: totalPoints,
+			})
+		competencies = append(competencies, compId)
 	}
 
-	newCandidate := models.CandidateModel{
-		Firstname:  candidateData.Firstname,
-		Lastname:   candidateData.Lastname,
-		Middlename: candidateData.Middlename,
-		Age:        candidateData.Age,
-		Rank:       candidateData.Rank,
-		Avatar:     candidateData.Avatar,
-		Documents:  candidateData.DocumentsNames,
-	}
+	deepSeekResult := candRepo.deepSeekClient.Assessment(deepSeekRequest)
+
+	fmt.Println(deepSeekResult)
+
+	_, _ = candRepo.mongoDB.Collection("candidates").
+		InsertOne(ctx, models.CandidateModel{
+			Firstname:    candidateData.Firstname,
+			Lastname:     candidateData.Lastname,
+			Middlename:   candidateData.Middlename,
+			Age:          candidateData.Age,
+			Rank:         candidateData.Rank,
+			Avatar:       candidateData.Avatar,
+			Documents:    candidateData.DocumentsNames,
+			Competencies: competencies,
+		})
 
 	return http.StatusOK, nil, qualification
 }

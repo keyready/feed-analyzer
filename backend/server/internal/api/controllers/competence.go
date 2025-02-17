@@ -23,8 +23,3 @@ func (compContr *CompetenceController) GetAllSkillsCompetencies(ctx *gin.Context
 
 	ctx.JSON(http.StatusOK, allBodyCompetenciesResponse)
 }
-
-func (compContr *CompetenceController) GetAllTypeOfNames(ctx *gin.Context) {
-	httpCode, _, types := compContr.compUsecase.GetAllTypeOfNames()
-	ctx.JSON(httpCode, types)
-}

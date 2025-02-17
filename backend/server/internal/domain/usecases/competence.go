@@ -1,13 +1,11 @@
 package usecases
 
 import (
-	"net/http"
 	"server/internal/domain/repositories"
 	"server/internal/domain/types/response"
 )
 
 type CompetenceUsecase interface {
-	GetAllTypeOfNames() (httpCode int, usecaseErr error, types response.TypeOfNames)
 	GetAllSkillsCompetencies() (httpCode int, usecaseErr error, allBodyCompetenciesResponse []response.AllSkills)
 }
 
@@ -25,9 +23,4 @@ func (compUsecase *CompetenceUsecaseImpl) GetAllSkillsCompetencies() (httpCode i
 		return httpCode, usecaseErr, nil
 	}
 	return httpCode, nil, allBodyCompetencies
-}
-
-func (compUsecase *CompetenceUsecaseImpl) GetAllTypeOfNames() (httpCode int, usecaseErr error, types response.TypeOfNames) {
-	httpCode, usecaseErr, types = compUsecase.compRepo.GetAllTypeOfNames()
-	return http.StatusOK, nil, types
 }
